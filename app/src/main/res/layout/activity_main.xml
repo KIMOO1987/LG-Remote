@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/background">
+
+    <!-- Toolbar -->
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="?attr/colorPrimary"
+        android:elevation="4dp"
+        android:theme="@style/ThemeOverlay.MaterialComponents.Dark.ActionBar"
+        app:menu="@menu/menu_main" />
+
+    <!-- Content Area -->
+    <FrameLayout
+        android:id="@+id/contentFrame"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <!-- TAB 1: REMOTE -->
+        <ScrollView
+            android:id="@+id/panelRemote"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:visibility="visible">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="16dp">
+
+                <!-- Power & Top Row -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center">
+                    <Button
+                        android:id="@+id/btnPower"
+                        style="@style/RemoteButton"
+                        android:layout_width="64dp"
+                        android:backgroundTint="@color/remote_red"
+                        android:text="⏻"
+                        android:textSize="24sp" />
+                </LinearLayout>
+
+                <!-- Volume & Channel -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="16dp">
+
+                    <!-- Volume Side -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:gravity="center">
+                        <Button android:id="@+id/btnVolUp" style="@style/RemoteButton" android:layout_width="match_parent" android:text="VOL +" />
+                        <TextView android:id="@+id/tvVolume" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="VOL 25" android:textStyle="bold" />
+                        <Button android:id="@+id/btnVolDown" style="@style/RemoteButton" android:layout_width="match_parent" android:text="VOL -" />
+                        <Button android:id="@+id/btnMute" style="@style/RemoteButton.Small" android:layout_width="match_parent" android:text="MUTE" />
+                    </LinearLayout>
+
+                    <View android:layout_width="16dp" android:layout_height="match_parent" />
+
+                    <!-- Channel Side -->
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical"
+                        android:gravity="center">
+                        <Button android:id="@+id/btnChUp" style="@style/RemoteButton" android:layout_width="match_parent" android:text="CH ▲" />
+                        <TextView android:id="@+id/tvChannel" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Channel" android:textStyle="bold" android:singleLine="true" />
+                        <Button android:id="@+id/btnChDown" style="@style/RemoteButton" android:layout_width="match_parent" android:text="CH ▼" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <!-- D-PAD -->
+                <GridLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="24dp"
+                    android:columnCount="3">
+                    <View android:layout_width="64dp" android:layout_height="64dp" />
+                    <Button android:id="@+id/btnUp" style="@style/RemoteButton" android:layout_width="64dp" android:layout_height="64dp" android:text="▲" />
+                    <View android:layout_width="64dp" android:layout_height="64dp" />
+                    
+                    <Button android:id="@+id/btnLeft" style="@style/RemoteButton" android:layout_width="64dp" android:layout_height="64dp" android:text="◀" />
+                    <Button android:id="@+id/btnOk" style="@style/RemoteButton.Accent" android:layout_width="64dp" android:layout_height="64dp" android:text="OK" />
+                    <Button android:id="@+id/btnRight" style="@style/RemoteButton" android:layout_width="64dp" android:layout_height="64dp" android:text="▶" />
+
+                    <View android:layout_width="64dp" android:layout_height="64dp" />
+                    <Button android:id="@+id/btnDown" style="@style/RemoteButton" android:layout_width="64dp" android:layout_height="64dp" android:text="▼" />
+                    <View android:layout_width="64dp" android:layout_height="64dp" />
+                </GridLayout>
+
+                <!-- System Keys -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp">
+                    <Button android:id="@+id/btnBack" style="@style/RemoteButton" android:layout_weight="1" android:text="BACK" />
+                    <Button android:id="@+id/btnHome" style="@style/RemoteButton" android:layout_weight="1" android:text="HOME" />
+                    <Button android:id="@+id/btnExit" style="@style/RemoteButton" android:layout_weight="1" android:text="EXIT" />
+                </LinearLayout>
+
+                <!-- Media Controls -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp">
+                    <Button android:id="@+id/btnRew" style="@style/RemoteButton.Small" android:layout_weight="1" android:text="⏪" />
+                    <Button android:id="@+id/btnPlay" style="@style/RemoteButton.Small" android:layout_weight="1" android:text="▶" />
+                    <Button android:id="@+id/btnPause" style="@style/RemoteButton.Small" android:layout_weight="1" android:text="⏸" />
+                    <Button android:id="@+id/btnFF" style="@style/RemoteButton.Small" android:layout_weight="1" android:text="⏩" />
+                </LinearLayout>
+
+                <!-- Color Keys -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp">
+                    <Button android:id="@+id/btnRed" style="@style/RemoteButton.Small" android:layout_weight="1" android:backgroundTint="@color/remote_red" android:text="●" />
+                    <Button android:id="@+id/btnGreen" style="@style/RemoteButton.Small" android:layout_weight="1" android:backgroundTint="@color/remote_green" android:text="●" />
+                    <Button android:id="@+id/btnYellow" style="@style/RemoteButton.Small" android:layout_weight="1" android:backgroundTint="@color/remote_yellow" android:text="●" />
+                    <Button android:id="@+id/btnBlue" style="@style/RemoteButton.Small" android:layout_weight="1" android:backgroundTint="@color/remote_blue" android:text="●" />
+                </LinearLayout>
+
+            </LinearLayout>
+        </ScrollView>
+
+        <!-- TAB 2: TOUCHPAD -->
+        <LinearLayout
+            android:id="@+id/panelTouchpad"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="8dp"
+                android:gravity="center_vertical">
+                <Switch
+                    android:id="@+id/switchMode"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Mouse / Scroll" />
+                <View android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="1" />
+                <Button
+                    android:id="@+id/btnTouchKeyboard"
+                    style="@style/RemoteButton.Small"
+                    android:layout_width="wrap_content"
+                    android:backgroundTint="@color/accent"
+                    android:text="⌨ Keyboard" />
+            </LinearLayout>
+
+            <FrameLayout
+                android:id="@+id/touchSurface"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_margin="16dp"
+                android:background="@drawable/bg_touchpad" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Tap = Click · Drag = Move Pointer"
+                android:textAlignment="center"
+                android:padding="16dp"
+                android:textColor="@color/text_secondary" />
+        </LinearLayout>
+
+        <!-- TAB 3: APPS -->
+        <LinearLayout
+            android:id="@+id/panelApps"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+                android:id="@+id/swipeRefresh"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+                
+                <GridView
+                    android:id="@+id/appsGrid"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:numColumns="4"
+                    android:padding="8dp"
+                    android:verticalSpacing="8dp"
+                    android:horizontalSpacing="8dp" />
+            </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+        </LinearLayout>
+
+    </FrameLayout>
+
+    <!-- Tab Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:background="@color/surface"
+        android:elevation="8dp">
+
+        <Button
+            android:id="@+id/tabRemote"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="Remote" />
+
+        <Button
+            android:id="@+id/tabTouchpad"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="Touchpad" />
+
+        <Button
+            android:id="@+id/tabApps"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="Apps" />
+    </LinearLayout>
+
+</LinearLayout>

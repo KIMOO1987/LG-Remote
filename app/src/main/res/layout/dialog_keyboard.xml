@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    android:background="@color/background">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+        <EditText
+            android:id="@+id/etInput"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Type here..." />
+        <Button
+            android:id="@+id/btnClear"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Clear" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp">
+        <Button
+            android:id="@+id/btnSendText"
+            style="@style/RemoteButton.Small"
+            android:layout_weight="1"
+            android:text="Send Text" />
+        <Button
+            android:id="@+id/btnReplaceAll"
+            style="@style/RemoteButton.Small"
+            android:layout_weight="1"
+            android:text="Replace All" />
+        <Button
+            android:id="@+id/btnDelete"
+            style="@style/RemoteButton.Small"
+            android:layout_weight="1"
+            android:text="⌫ Del" />
+    </LinearLayout>
+
+    <!-- Custom Keyboard Grid -->
+    <GridLayout
+        android:id="@+id/keyboardGrid"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:columnCount="10"
+        android:alignmentMode="alignBounds">
+        <!-- Will be populated programmatically -->
+    </GridLayout>
+
+    <View android:layout_width="1dp" android:layout_height="0dp" android:layout_weight="1" />
+
+    <Button
+        android:id="@+id/btnClose"
+        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Close Keyboard" />
+</LinearLayout>
