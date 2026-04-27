@@ -102,18 +102,14 @@ class WebOSClient(val ip: String) {
             put("id", id)
             put("payload", JSONObject().apply {
                 put("forcePairing", false)
-                put("pairingType", "PIN") // Changed to PIN pairing
+                put("pairingType", "PIN")
                 if (key != null) put("client-key", key)
                 put("manifest", JSONObject().apply {
                     put("manifestVersion", 1)
-                    put("appId", "com.lgremote.client")
-                    put("vendorId", "com.lgremote")
-                    put("localizedAppNames", JSONObject().put("", "LG Remote Control"))
+                    put("appId", "com.webos.app.lgremote")
                     put("permissions", JSONArray(listOf(
                         "LAUNCH", "CONTROL_AUDIO", "CONTROL_INPUT_TEXT", 
-                        "CONTROL_INPUT_JOYSTICK", "READ_INSTALLED_APPS", "CONTROL_POWER",
-                        "READ_TV_CHANNEL_LIST", "READ_CURRENT_CHANNEL", "READ_RUNNING_APPS",
-                        "READ_NETWORK_STATE", "CONTROL_TV_SETTING", "CONTROL_TV_SCREEN"
+                        "CONTROL_INPUT_JOYSTICK", "READ_INSTALLED_APPS", "CONTROL_POWER"
                     )))
                 })
             })
