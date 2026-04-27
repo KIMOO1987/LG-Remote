@@ -38,9 +38,8 @@ class MainActivity : AppCompatActivity(), WebOSClient.Listener {
         client = WebOSClient(device.ip)
         client.listener = this
 
-        setSupportActionBar(binding.toolbar)
-        supportActionBar?.title = device.friendlyName
-        supportActionBar?.subtitle = "Connecting..."
+        binding.tvTvName.text = device.friendlyName
+        binding.tvStatus.text = "Connecting..."
 
         setupTabs()
         setupRemoteButtons()
@@ -111,19 +110,8 @@ class MainActivity : AppCompatActivity(), WebOSClient.Listener {
         // System
         binding.btnHome.setOnClickListener { client.sendKey("HOME") }
         binding.btnBack.setOnClickListener { client.sendKey("BACK") }
-        binding.btnExit.setOnClickListener { client.sendKey("EXIT") }
 
-        // Media
-        binding.btnRew.setOnClickListener { client.sendRequest("ssap://media.controls/rewind", JSONObject()) }
-        binding.btnPlay.setOnClickListener { client.sendRequest("ssap://media.controls/play", JSONObject()) }
-        binding.btnPause.setOnClickListener { client.sendRequest("ssap://media.controls/pause", JSONObject()) }
-        binding.btnFF.setOnClickListener { client.sendRequest("ssap://media.controls/fastForward", JSONObject()) }
-
-        // Colors
-        binding.btnRed.setOnClickListener { client.sendKey("RED") }
-        binding.btnGreen.setOnClickListener { client.sendKey("GREEN") }
-        binding.btnYellow.setOnClickListener { client.sendKey("YELLOW") }
-        binding.btnBlue.setOnClickListener { client.sendKey("BLUE") }
+        // Note: btnExit, Media controls, and Color keys are removed in this layout version
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -183,7 +171,15 @@ class MainActivity : AppCompatActivity(), WebOSClient.Listener {
 
     // Client Listeners
     override fun onStateChange(state: WebOSClient.State) {
-        supportActionBar?.subtitle = state.name
+        binding.tvStatus.text = when(state) {
+            WebOSClient.State.CONNECTED -> "Connected"
+            WebOSClient.State.PAIRING -> "Pairing..."
+            WebOSClient.State.CONNECTING -> "Connecting..."
+            WebOSClient.State.DISCONNECTED -> "Disconnected"
+        }
+        binding.statusDot.setBackgroundResource(
+            if (state == WebOSClient.State.CONNECTED) R.drawable.bg_dot_green else R.drawable.bg_status_bar
+        )
     }
 
     override fun onVolumeUpdate(volume: Int, muted: Boolean) {

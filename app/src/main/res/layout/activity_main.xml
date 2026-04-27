@@ -136,6 +136,7 @@
                         android:text="▲" />
 
                     <TextView
+                        android:id="@+id/tvChannel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="CH"
@@ -175,6 +176,7 @@
                         android:text="+" />
 
                     <TextView
+                        android:id="@+id/tvVolume"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="VOL"
