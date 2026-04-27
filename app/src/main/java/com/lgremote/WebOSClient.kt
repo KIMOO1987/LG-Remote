@@ -77,9 +77,9 @@ class WebOSClient(val ip: String) {
                 "error" -> {
                     val error = json.optString("error")
                     if (error.contains("401") || error.contains("permission")) {
-                        handler.post { listener?.onError("Insufficient Permission. Try pairing again.") }
+                        handler.post { listener?.onError("Insufficient Permission. Try resetting LG Connect Apps on TV.") }
                     } else {
-                        handler.post { listener?.onError(error) }
+                        handler.post { listener?.onError("TV Error: $error") }
                     }
                 }
             }
@@ -106,10 +106,13 @@ class WebOSClient(val ip: String) {
                 if (key != null) put("client-key", key)
                 put("manifest", JSONObject().apply {
                     put("manifestVersion", 1)
-                    put("appId", "com.webos.app.lgremote")
+                    put("appId", "com.lgremote.app")
                     put("permissions", JSONArray(listOf(
                         "LAUNCH", "CONTROL_AUDIO", "CONTROL_INPUT_TEXT", 
-                        "CONTROL_INPUT_JOYSTICK", "READ_INSTALLED_APPS", "CONTROL_POWER"
+                        "CONTROL_INPUT_JOYSTICK", "READ_INSTALLED_APPS", "CONTROL_POWER",
+                        "READ_LGE_SDP_COMMON", "READ_TV_CHANNEL_LIST", "READ_NETWORK_STATE",
+                        "CONTROL_TV_SCREEN", "CONTROL_TV_SETTING", "READ_RUNNING_APPS",
+                        "READ_CURRENT_CHANNEL", "READ_TV_STATE"
                     )))
                 })
             })
@@ -133,14 +136,18 @@ class WebOSClient(val ip: String) {
     private fun setupSubscriptions() {
         sendRequest("ssap://audio/getVolume", JSONObject(), subscribe = true) { resp ->
             val payload = resp.optJSONObject("payload")
-            val vol = payload?.optInt("volume") ?: 0
-            val muted = payload?.optBoolean("muted") ?: false
-            handler.post { listener?.onVolumeUpdate(vol, muted) }
+            if (payload != null) {
+                val vol = payload.optInt("volume")
+                val muted = payload.optBoolean("muted")
+                handler.post { listener?.onVolumeUpdate(vol, muted) }
+            }
         }
         sendRequest("ssap://tv/getCurrentChannel", JSONObject(), subscribe = true) { resp ->
             val payload = resp.optJSONObject("payload")
-            val name = payload?.optString("channelName") ?: "Unknown"
-            handler.post { listener?.onChannelUpdate(name) }
+            if (payload != null) {
+                val name = payload.optString("channelName", "Unknown")
+                handler.post { listener?.onChannelUpdate(name) }
+            }
         }
     }
 
