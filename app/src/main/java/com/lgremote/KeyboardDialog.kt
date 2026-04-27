@@ -38,7 +38,11 @@ class KeyboardDialog(private val client: WebOSClient) : BottomSheetDialogFragmen
         }
         
         binding.btnSendText.setOnClickListener {
-            client.insertText(binding.etInput.text.toString(), replace = 0)
+            val text = binding.etInput.text.toString()
+            if (text.isNotEmpty()) {
+                client.insertText(text, replace = 0)
+                client.sendKey("ENTER")
+            }
         }
         
         binding.btnReplaceAll.setOnClickListener {
@@ -67,7 +71,7 @@ class KeyboardDialog(private val client: WebOSClient) : BottomSheetDialogFragmen
             }
         }
         
-        // Special keys
+        // Special keys row
         addControlButton(if (isNumbers) "ABC" else "123") {
             isNumbers = !isNumbers
             setupKeyboard()
@@ -95,6 +99,7 @@ class KeyboardDialog(private val client: WebOSClient) : BottomSheetDialogFragmen
             width = 0
             height = ViewGroup.LayoutParams.WRAP_CONTENT
             columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f)
+            setMargins(4, 4, 4, 4)
         }
         btn.setOnClickListener {
             binding.etInput.append(char)
@@ -110,6 +115,7 @@ class KeyboardDialog(private val client: WebOSClient) : BottomSheetDialogFragmen
             width = 0
             height = ViewGroup.LayoutParams.WRAP_CONTENT
             columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 2f)
+            setMargins(4, 4, 4, 4)
         }
         btn.setOnClickListener { action() }
         binding.keyboardGrid.addView(btn)

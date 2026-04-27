@@ -49,26 +49,43 @@ class MainActivity : AppCompatActivity(), WebOSClient.Listener {
 
         client.connect(device.clientKey)
         
-        binding.toolbar.setOnMenuItemClickListener {
-            if (it.itemId == R.id.action_keyboard) {
-                showKeyboard()
-                true
-            } else false
-        }
+        binding.btnKeyboard.setOnClickListener { showKeyboard() }
+        binding.btnSettings.setOnClickListener { client.sendKey("MENU") }
+        binding.btnSearch.setOnClickListener { client.sendKey("SEARCH") }
+        binding.btnInput.setOnClickListener { client.sendKey("INPUT") }
+        binding.btnPointer.setOnClickListener { switchTab(3) }
     }
 
     private fun setupTabs() {
-        binding.tabRemote.setOnClickListener { switchTab(0) }
-        binding.tabTouchpad.setOnClickListener { switchTab(1) }
-        binding.tabApps.setOnClickListener { switchTab(2) }
+        binding.navRemote.setOnClickListener { switchTab(0) }
+        binding.navApps.setOnClickListener { switchTab(1) }
+        binding.navSettings.setOnClickListener { switchTab(2) }
     }
 
     private fun switchTab(index: Int) {
         binding.panelRemote.visibility = if (index == 0) View.VISIBLE else View.GONE
-        binding.panelTouchpad.visibility = if (index == 1) View.VISIBLE else View.GONE
-        binding.panelApps.visibility = if (index == 2) View.VISIBLE else View.GONE
+        binding.panelApps.visibility = if (index == 1) View.VISIBLE else View.GONE
+        binding.panelSettings.visibility = if (index == 2) View.VISIBLE else View.GONE
+        binding.panelTouchpad.visibility = if (index == 3) View.VISIBLE else View.GONE
         
-        if (index == 2) refreshApps()
+        // Update Nav Colors
+        updateNavUI(index)
+        
+        if (index == 1) refreshApps()
+    }
+
+    private fun updateNavUI(index: Int) {
+        val activeColor = getColor(R.color.accent)
+        val inactiveColor = getColor(R.color.nav_inactive)
+
+        binding.ivNavRemote.setColorFilter(if (index == 0) activeColor else inactiveColor)
+        binding.tvNavRemote.setTextColor(if (index == 0) activeColor else inactiveColor)
+
+        binding.ivNavApps.setColorFilter(if (index == 1) activeColor else inactiveColor)
+        binding.tvNavApps.setTextColor(if (index == 1) activeColor else inactiveColor)
+
+        binding.ivNavSettings.setColorFilter(if (index == 2) activeColor else inactiveColor)
+        binding.tvNavSettings.setTextColor(if (index == 2) activeColor else inactiveColor)
     }
 
     private fun setupRemoteButtons() {
@@ -119,16 +136,12 @@ class MainActivity : AppCompatActivity(), WebOSClient.Listener {
                     isMoved = false
                 }
                 MotionEvent.ACTION_MOVE -> {
-                    val dx = (event.x - lastX).toInt()
-                    val dy = (event.y - lastY).toInt()
+                    val dx = ((event.x - lastX) * 2.5f).toInt() // Sensitivity multiplier
+                    val dy = ((event.y - lastY) * 2.5f).toInt()
                     
-                    if (abs(dx) > moveThreshold || abs(dy) > moveThreshold) {
+                    if (abs(dx) > 2 || abs(dy) > 2) {
                         isMoved = true
-                        if (binding.switchMode.isChecked) {
-                            client.scroll(dx / 3, dy / 3)
-                        } else {
-                            client.moveMouse(dx, dy)
-                        }
+                        client.moveMouse(dx, dy)
                         lastX = event.x
                         lastY = event.y
                     }
@@ -139,8 +152,6 @@ class MainActivity : AppCompatActivity(), WebOSClient.Listener {
             }
             true
         }
-        
-        binding.btnTouchKeyboard.setOnClickListener { showKeyboard() }
     }
 
     private fun setupAppsTab() {
