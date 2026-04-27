@@ -2,6 +2,7 @@ package com.lgremote
 
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import okhttp3.*
 import org.json.JSONArray
 import org.json.JSONObject
@@ -77,7 +78,9 @@ class WebOSClient(val ip: String) {
                 "error" -> {
                     val error = json.optString("error")
                     if (error.contains("401") || error.contains("permission")) {
-                        handler.post { listener?.onError("Insufficient Permission. Please reset 'LG Connect Apps' in TV settings.") }
+                        handler.post { listener?.onError("Insufficient Permission. Reset 'LG Connect Apps' on TV.") }
+                    } else if (error.contains("500")) {
+                        handler.post { listener?.onError("TV Internal Error (500). Please restart your TV.") }
                     } else {
                         handler.post { listener?.onError("TV Error: $error") }
                     }
@@ -97,6 +100,8 @@ class WebOSClient(val ip: String) {
 
     private fun register(key: String?) {
         val id = "reg_${msgId.getAndIncrement()}"
+        
+        // Comprehensive permission list used by official apps
         val permissions = JSONArray().apply {
             put("LAUNCH")
             put("CONTROL_AUDIO")
@@ -112,13 +117,14 @@ class WebOSClient(val ip: String) {
             put("CONTROL_TV_SCREEN")
             put("READ_TV_STATE")
             put("READ_LGE_SDP_COMMON")
+            put("CONTROL_TV_DISPLAY")
         }
 
         val manifest = JSONObject().apply {
-            put("manifestVersion", 1)
-            put("appId", "com.webos.app.remote")
+            put("manifestVersion", 1.1)
+            put("appId", "com.webos.app.remote") // Trusted App ID
             put("vendorId", "com.lge")
-            put("localizedAppNames", JSONObject().put("", "LG Remote"))
+            put("localizedAppNames", JSONObject().put("", "LG Smart Remote"))
             put("permissions", permissions)
         }
 
@@ -126,7 +132,7 @@ class WebOSClient(val ip: String) {
             put("type", "register")
             put("id", id)
             put("payload", JSONObject().apply {
-                put("forcePairing", false)
+                put("forcePairing", key == null) // Force new pairing if no key
                 put("pairingType", "PIN")
                 if (key != null) put("client-key", key)
                 put("manifest", manifest)
@@ -172,8 +178,13 @@ class WebOSClient(val ip: String) {
             if (url != null) {
                 val request = Request.Builder().url(url).build()
                 pointerSocket = client.newWebSocket(request, object : WebSocketListener() {
-                    override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) { }
+                    override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
+                        Log.e("WebOS", "Pointer socket failed, retrying in 2s...")
+                        handler.postDelayed({ openPointerSocket() }, 2000)
+                    }
                 })
+            } else {
+                Log.e("WebOS", "Pointer socket URL not returned. Possible permission issue.")
             }
         }
     }
@@ -210,7 +221,21 @@ class WebOSClient(val ip: String) {
         put("replace", replace)
     })
     fun deleteChar(count: Int = 1) = sendRequest("ssap://com.webos.service.ime/deleteCharacters", JSONObject().put("count", count))
-    fun sendKey(name: String) = pointerSocket?.send("type:button\nname:$name\n\n")
+    
+    // Remote Keys - Standard Button Names
+    fun sendKey(name: String) {
+        if (pointerSocket != null) {
+            pointerSocket?.send("type:button\nname:$name\n\n")
+        } else {
+            // Fallback for some keys if pointer is not available
+            when (name) {
+                "HOME" -> sendRequest("ssap://system.launcher/open", JSONObject().put("id", "com.webos.app.home"))
+                "BACK" -> sendRequest("ssap://system.launcher/close", JSONObject())
+                else -> Log.w("WebOS", "Key $name ignored because pointer socket is null")
+            }
+        }
+    }
+    
     fun moveMouse(dx: Int, dy: Int) = pointerSocket?.send("type:move\ndx:$dx\ndy:$dy\ndown:0\n\n")
     fun click() = pointerSocket?.send("type:click\n\n")
     fun scroll(dx: Int, dy: Int) = pointerSocket?.send("type:scroll\ndx:$dx\ndy:$dy\n\n")
