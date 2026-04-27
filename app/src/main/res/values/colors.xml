@@ -1,19 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primary">#121212</color>
-    <color name="primary_dark">#000000</color>
-    <color name="accent">#B01E53</color>
-    <color name="background">#121212</color>
-    <color name="surface">#1E1E1E</color>
-    <color name="surface_variant">#2C2C2C</color>
-    <color name="button_dark">#262626</color>
-    <color name="text_primary">#FFFFFF</color>
-    <color name="text_secondary">#AAAAAA</color>
+    <color name="primary">#1565C0</color>
+    <color name="primary_dark">#0D47A1</color>
+    <color name="accent">#FF6D00</color>
+    <color name="background">#F5F5F5</color>
+    <color name="surface">#FFFFFF</color>
+    <color name="button_dark">#37474F</color>
+    <color name="text_primary">#212121</color>
+    <color name="text_secondary">#757575</color>
     
-    <color name="remote_red">#FF3B30</color>
-    <color name="remote_green">#4CD964</color>
-    <color name="remote_yellow">#FFCC00</color>
-    <color name="remote_blue">#007AFF</color>
-    
-    <color name="nav_inactive">#666666</color>
+    <!-- Remote Colors -->
+    <color name="remote_red">#E53935</color>
+    <color name="remote_green">#43A047</color>
+    <color name="remote_yellow">#F9A825</color>
+    <color name="remote_blue">#1E88E5</color>
 </resources>

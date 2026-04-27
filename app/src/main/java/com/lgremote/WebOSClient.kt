@@ -17,6 +17,7 @@ class WebOSClient(val ip: String) {
         fun onVolumeUpdate(volume: Int, muted: Boolean)
         fun onChannelUpdate(channelName: String)
         fun onPairingPrompt()
+        fun onPinRequired()
         fun onError(message: String)
         fun onConnected()
     }
@@ -74,7 +75,12 @@ class WebOSClient(val ip: String) {
                     callbacks.remove(id)
                 }
                 "error" -> {
-                    handler.post { listener?.onError(json.optString("error")) }
+                    val error = json.optString("error")
+                    if (error.contains("401") || error.contains("permission")) {
+                        handler.post { listener?.onError("Insufficient Permission. Try pairing again.") }
+                    } else {
+                        handler.post { listener?.onError(error) }
+                    }
                 }
             }
         }
@@ -96,14 +102,18 @@ class WebOSClient(val ip: String) {
             put("id", id)
             put("payload", JSONObject().apply {
                 put("forcePairing", false)
-                put("pairingType", "PROMPT")
+                put("pairingType", "PIN") // Changed to PIN pairing
                 if (key != null) put("client-key", key)
                 put("manifest", JSONObject().apply {
                     put("manifestVersion", 1)
-                    put("appId", "com.lgremote")
+                    put("appId", "com.lgremote.client")
+                    put("vendorId", "com.lgremote")
+                    put("localizedAppNames", JSONObject().put("", "LG Remote Control"))
                     put("permissions", JSONArray(listOf(
                         "LAUNCH", "CONTROL_AUDIO", "CONTROL_INPUT_TEXT", 
-                        "CONTROL_INPUT_JOYSTICK", "READ_INSTALLED_APPS", "CONTROL_POWER"
+                        "CONTROL_INPUT_JOYSTICK", "READ_INSTALLED_APPS", "CONTROL_POWER",
+                        "READ_TV_CHANNEL_LIST", "READ_CURRENT_CHANNEL", "READ_RUNNING_APPS",
+                        "READ_NETWORK_STATE", "CONTROL_TV_SETTING", "CONTROL_TV_SCREEN"
                     )))
                 })
             })
@@ -111,19 +121,26 @@ class WebOSClient(val ip: String) {
         mainSocket?.send(msg.toString())
         if (key == null) {
             state = State.PAIRING
-            handler.post { listener?.onPairingPrompt() }
+            handler.post { listener?.onPinRequired() }
         }
     }
 
+    fun sendPin(pin: String) {
+        val msg = JSONObject().apply {
+            put("type", "request")
+            put("uri", "ssap://pairing/setPin")
+            put("payload", JSONObject().put("pin", pin))
+        }
+        mainSocket?.send(msg.toString())
+    }
+
     private fun setupSubscriptions() {
-        // Volume subscription
         sendRequest("ssap://audio/getVolume", JSONObject(), subscribe = true) { resp ->
             val payload = resp.optJSONObject("payload")
             val vol = payload?.optInt("volume") ?: 0
             val muted = payload?.optBoolean("muted") ?: false
             handler.post { listener?.onVolumeUpdate(vol, muted) }
         }
-        // Channel subscription
         sendRequest("ssap://tv/getCurrentChannel", JSONObject(), subscribe = true) { resp ->
             val payload = resp.optJSONObject("payload")
             val name = payload?.optString("channelName") ?: "Unknown"
@@ -137,19 +154,15 @@ class WebOSClient(val ip: String) {
             if (url != null) {
                 val request = Request.Builder().url(url).build()
                 pointerSocket = client.newWebSocket(request, object : WebSocketListener() {
-                    override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) {
-                        // Silent fail for pointer, maybe retry later
-                    }
+                    override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) { }
                 })
             }
         }
     }
 
-    // SSAP Commands
     fun sendRequest(uri: String, payload: JSONObject, subscribe: Boolean = false, callback: ((JSONObject) -> Unit)? = null) {
         val id = "msg_${msgId.getAndIncrement()}"
         if (callback != null) callbacks[id] = callback
-        
         val msg = JSONObject().apply {
             put("type", if (subscribe) "subscribe" else "request")
             put("id", id)
@@ -159,51 +172,29 @@ class WebOSClient(val ip: String) {
         mainSocket?.send(msg.toString())
     }
 
-    // Remote Actions
     fun turnOff() = sendRequest("ssap://system/turnOff", JSONObject())
-    
     fun volumeUp() = sendRequest("ssap://audio/volumeUp", JSONObject())
     fun volumeDown() = sendRequest("ssap://audio/volumeDown", JSONObject())
     fun setVolume(vol: Int) = sendRequest("ssap://audio/setVolume", JSONObject().put("volume", vol))
     fun setMute(mute: Boolean) = sendRequest("ssap://audio/setMute", JSONObject().put("mute", mute))
-    
     fun channelUp() = sendRequest("ssap://tv/channelUp", JSONObject())
     fun channelDown() = sendRequest("ssap://tv/channelDown", JSONObject())
-    
     fun listApps(callback: (JSONArray) -> Unit) {
         sendRequest("ssap://com.webos.applicationManager/listApps", JSONObject()) { resp ->
             val apps = resp.optJSONObject("payload")?.optJSONArray("apps") ?: JSONArray()
             handler.post { callback(apps) }
         }
     }
-    
     fun launchApp(appId: String) = sendRequest("ssap://system.launcher/launch", JSONObject().put("id", appId))
     fun closeApp(appId: String) = sendRequest("ssap://system.launcher/close", JSONObject().put("id", appId))
-
-    // Keyboard/IME
     fun insertText(text: String, replace: Int = 0) = sendRequest("ssap://com.webos.service.ime/insertText", JSONObject().apply {
         put("text", text)
         put("replace", replace)
     })
-    
     fun deleteChar(count: Int = 1) = sendRequest("ssap://com.webos.service.ime/deleteCharacters", JSONObject().put("count", count))
-
-    // Pointer Commands
-    fun sendKey(name: String) {
-        pointerSocket?.send("type:button\nname:$name\n\n")
-    }
-
-    fun moveMouse(dx: Int, dy: Int) {
-        pointerSocket?.send("type:move\ndx:$dx\ndy:$dy\ndown:0\n\n")
-    }
-
-    fun click() {
-        pointerSocket?.send("type:click\n\n")
-    }
-
-    fun scroll(dx: Int, dy: Int) {
-        pointerSocket?.send("type:scroll\ndx:$dx\ndy:$dy\n\n")
-    }
-
+    fun sendKey(name: String) = pointerSocket?.send("type:button\nname:$name\n\n")
+    fun moveMouse(dx: Int, dy: Int) = pointerSocket?.send("type:move\ndx:$dx\ndy:$dy\ndown:0\n\n")
+    fun click() = pointerSocket?.send("type:click\n\n")
+    fun scroll(dx: Int, dy: Int) = pointerSocket?.send("type:scroll\ndx:$dx\ndy:$dy\n\n")
     fun getClientKey(): String? = clientKey
 }

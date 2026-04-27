@@ -7,9 +7,11 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.BaseAdapter
+import android.widget.EditText
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.bumptech.glide.Glide
 import com.google.android.material.snackbar.Snackbar
@@ -38,8 +40,9 @@ class MainActivity : AppCompatActivity(), WebOSClient.Listener {
         client = WebOSClient(device.ip)
         client.listener = this
 
-        binding.tvTvName.text = device.friendlyName
-        binding.tvStatus.text = "Connecting..."
+        setSupportActionBar(binding.toolbar)
+        supportActionBar?.title = device.friendlyName
+        supportActionBar?.subtitle = "Connecting..."
 
         setupTabs()
         setupRemoteButtons()
@@ -48,70 +51,50 @@ class MainActivity : AppCompatActivity(), WebOSClient.Listener {
 
         client.connect(device.clientKey)
         
-        binding.btnKeyboard.setOnClickListener { showKeyboard() }
-        binding.btnSettings.setOnClickListener { client.sendKey("MENU") }
-        binding.btnSearch.setOnClickListener { client.sendKey("SEARCH") }
-        binding.btnInput.setOnClickListener { client.sendKey("INPUT") }
-        binding.btnPointer.setOnClickListener { switchTab(3) }
+        binding.toolbar.setOnMenuItemClickListener {
+            if (it.itemId == R.id.action_keyboard) {
+                showKeyboard()
+                true
+            } else false
+        }
     }
 
     private fun setupTabs() {
-        binding.navRemote.setOnClickListener { switchTab(0) }
-        binding.navApps.setOnClickListener { switchTab(1) }
-        binding.navSettings.setOnClickListener { switchTab(2) }
+        binding.tabRemote.setOnClickListener { switchTab(0) }
+        binding.tabTouchpad.setOnClickListener { switchTab(1) }
+        binding.tabApps.setOnClickListener { switchTab(2) }
     }
 
     private fun switchTab(index: Int) {
         binding.panelRemote.visibility = if (index == 0) View.VISIBLE else View.GONE
-        binding.panelApps.visibility = if (index == 1) View.VISIBLE else View.GONE
-        binding.panelSettings.visibility = if (index == 2) View.VISIBLE else View.GONE
-        binding.panelTouchpad.visibility = if (index == 3) View.VISIBLE else View.GONE
+        binding.panelTouchpad.visibility = if (index == 1) View.VISIBLE else View.GONE
+        binding.panelApps.visibility = if (index == 2) View.VISIBLE else View.GONE
         
-        // Update Nav Colors
-        updateNavUI(index)
-        
-        if (index == 1) refreshApps()
-    }
-
-    private fun updateNavUI(index: Int) {
-        val activeColor = getColor(R.color.accent)
-        val inactiveColor = getColor(R.color.nav_inactive)
-
-        binding.ivNavRemote.setColorFilter(if (index == 0) activeColor else inactiveColor)
-        binding.tvNavRemote.setTextColor(if (index == 0) activeColor else inactiveColor)
-
-        binding.ivNavApps.setColorFilter(if (index == 1) activeColor else inactiveColor)
-        binding.tvNavApps.setTextColor(if (index == 1) activeColor else inactiveColor)
-
-        binding.ivNavSettings.setColorFilter(if (index == 2) activeColor else inactiveColor)
-        binding.tvNavSettings.setTextColor(if (index == 2) activeColor else inactiveColor)
+        if (index == 2) refreshApps()
     }
 
     private fun setupRemoteButtons() {
-        // Power
         binding.btnPower.setOnClickListener { client.turnOff() }
-
-        // Volume
         binding.btnVolUp.setOnClickListener { client.volumeUp() }
         binding.btnVolDown.setOnClickListener { client.volumeDown() }
-        binding.btnMute.setOnClickListener { /* Mute logic handled by subscription */ }
-
-        // Channel
         binding.btnChUp.setOnClickListener { client.channelUp() }
         binding.btnChDown.setOnClickListener { client.channelDown() }
-
-        // D-Pad
         binding.btnUp.setOnClickListener { client.sendKey("UP") }
         binding.btnDown.setOnClickListener { client.sendKey("DOWN") }
         binding.btnLeft.setOnClickListener { client.sendKey("LEFT") }
         binding.btnRight.setOnClickListener { client.sendKey("RIGHT") }
         binding.btnOk.setOnClickListener { client.sendKey("ENTER") }
-
-        // System
         binding.btnHome.setOnClickListener { client.sendKey("HOME") }
         binding.btnBack.setOnClickListener { client.sendKey("BACK") }
-
-        // Note: btnExit, Media controls, and Color keys are removed in this layout version
+        binding.btnExit.setOnClickListener { client.sendKey("EXIT") }
+        binding.btnRew.setOnClickListener { client.sendRequest("ssap://media.controls/rewind", JSONObject()) }
+        binding.btnPlay.setOnClickListener { client.sendRequest("ssap://media.controls/play", JSONObject()) }
+        binding.btnPause.setOnClickListener { client.sendRequest("ssap://media.controls/pause", JSONObject()) }
+        binding.btnFF.setOnClickListener { client.sendRequest("ssap://media.controls/fastForward", JSONObject()) }
+        binding.btnRed.setOnClickListener { client.sendKey("RED") }
+        binding.btnGreen.setOnClickListener { client.sendKey("GREEN") }
+        binding.btnYellow.setOnClickListener { client.sendKey("YELLOW") }
+        binding.btnBlue.setOnClickListener { client.sendKey("BLUE") }
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -124,12 +107,16 @@ class MainActivity : AppCompatActivity(), WebOSClient.Listener {
                     isMoved = false
                 }
                 MotionEvent.ACTION_MOVE -> {
-                    val dx = ((event.x - lastX) * 2.5f).toInt() // Sensitivity multiplier
-                    val dy = ((event.y - lastY) * 2.5f).toInt()
+                    val dx = (event.x - lastX).toInt()
+                    val dy = (event.y - lastY).toInt()
                     
-                    if (abs(dx) > 2 || abs(dy) > 2) {
+                    if (abs(dx) > moveThreshold || abs(dy) > moveThreshold) {
                         isMoved = true
-                        client.moveMouse(dx, dy)
+                        if (binding.switchMode.isChecked) {
+                            client.scroll(dx / 3, dy / 3)
+                        } else {
+                            client.moveMouse(dx, dy)
+                        }
                         lastX = event.x
                         lastY = event.y
                     }
@@ -140,6 +127,7 @@ class MainActivity : AppCompatActivity(), WebOSClient.Listener {
             }
             true
         }
+        binding.btnTouchKeyboard.setOnClickListener { showKeyboard() }
     }
 
     private fun setupAppsTab() {
@@ -150,8 +138,7 @@ class MainActivity : AppCompatActivity(), WebOSClient.Listener {
         binding.swipeRefresh.isRefreshing = true
         client.listApps { apps ->
             binding.swipeRefresh.isRefreshing = false
-            val adapter = AppAdapter(apps)
-            binding.appsGrid.adapter = adapter
+            binding.appsGrid.adapter = AppAdapter(apps)
             binding.appsGrid.setOnItemClickListener { _, _, position, _ ->
                 val appId = apps.getJSONObject(position).optString("id")
                 client.launchApp(appId)
@@ -169,17 +156,8 @@ class MainActivity : AppCompatActivity(), WebOSClient.Listener {
         KeyboardDialog(client).show(supportFragmentManager, "keyboard")
     }
 
-    // Client Listeners
     override fun onStateChange(state: WebOSClient.State) {
-        binding.tvStatus.text = when(state) {
-            WebOSClient.State.CONNECTED -> "Connected"
-            WebOSClient.State.PAIRING -> "Pairing..."
-            WebOSClient.State.CONNECTING -> "Connecting..."
-            WebOSClient.State.DISCONNECTED -> "Disconnected"
-        }
-        binding.statusDot.setBackgroundResource(
-            if (state == WebOSClient.State.CONNECTED) R.drawable.bg_dot_green else R.drawable.bg_status_bar
-        )
+        supportActionBar?.subtitle = state.name
     }
 
     override fun onVolumeUpdate(volume: Int, muted: Boolean) {
@@ -195,6 +173,19 @@ class MainActivity : AppCompatActivity(), WebOSClient.Listener {
     override fun onPairingPrompt() {
         Snackbar.make(binding.root, "Accept the pairing request on your TV", Snackbar.LENGTH_INDEFINITE)
             .setAction("OK") {}
+            .show()
+    }
+
+    override fun onPinRequired() {
+        val input = EditText(this)
+        input.hint = "3-digit code"
+        AlertDialog.Builder(this)
+            .setTitle("Enter PIN from TV")
+            .setView(input)
+            .setPositiveButton("Connect") { _, _ ->
+                client.sendPin(input.text.toString())
+            }
+            .setNegativeButton("Cancel", null)
             .show()
     }
 
@@ -219,17 +210,11 @@ class MainActivity : AppCompatActivity(), WebOSClient.Listener {
         override fun getCount(): Int = apps.length()
         override fun getItem(position: Int) = apps.getJSONObject(position)
         override fun getItemId(position: Int) = position.toLong()
-
         override fun getView(position: Int, convertView: View?, parent: ViewGroup?): View {
             val view = convertView ?: layoutInflater.inflate(R.layout.item_app, parent, false)
             val app = getItem(position)
-            val name = app.optString("title")
-            val iconUri = app.optString("icon")
-            
-            view.findViewById<TextView>(R.id.appName).text = name
-            val iconView = view.findViewById<ImageView>(R.id.appIcon)
-            Glide.with(this@MainActivity).load(iconUri).into(iconView)
-            
+            view.findViewById<TextView>(R.id.appName).text = app.optString("title")
+            Glide.with(this@MainActivity).load(app.optString("icon")).into(view.findViewById(R.id.appIcon))
             return view
         }
     }
