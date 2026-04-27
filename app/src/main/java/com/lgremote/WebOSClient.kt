@@ -77,7 +77,7 @@ class WebOSClient(val ip: String) {
                 "error" -> {
                     val error = json.optString("error")
                     if (error.contains("401") || error.contains("permission")) {
-                        handler.post { listener?.onError("Insufficient Permission. Try resetting LG Connect Apps on TV.") }
+                        handler.post { listener?.onError("Insufficient Permission. Please reset 'LG Connect Apps' in TV settings.") }
                     } else {
                         handler.post { listener?.onError("TV Error: $error") }
                     }
@@ -97,6 +97,31 @@ class WebOSClient(val ip: String) {
 
     private fun register(key: String?) {
         val id = "reg_${msgId.getAndIncrement()}"
+        val permissions = JSONArray().apply {
+            put("LAUNCH")
+            put("CONTROL_AUDIO")
+            put("CONTROL_INPUT_TEXT")
+            put("CONTROL_INPUT_JOYSTICK")
+            put("READ_INSTALLED_APPS")
+            put("CONTROL_POWER")
+            put("READ_TV_CHANNEL_LIST")
+            put("READ_CURRENT_CHANNEL")
+            put("READ_RUNNING_APPS")
+            put("READ_NETWORK_STATE")
+            put("CONTROL_TV_SETTING")
+            put("CONTROL_TV_SCREEN")
+            put("READ_TV_STATE")
+            put("READ_LGE_SDP_COMMON")
+        }
+
+        val manifest = JSONObject().apply {
+            put("manifestVersion", 1)
+            put("appId", "com.webos.app.remote")
+            put("vendorId", "com.lge")
+            put("localizedAppNames", JSONObject().put("", "LG Remote"))
+            put("permissions", permissions)
+        }
+
         val msg = JSONObject().apply {
             put("type", "register")
             put("id", id)
@@ -104,17 +129,7 @@ class WebOSClient(val ip: String) {
                 put("forcePairing", false)
                 put("pairingType", "PIN")
                 if (key != null) put("client-key", key)
-                put("manifest", JSONObject().apply {
-                    put("manifestVersion", 1)
-                    put("appId", "com.lgremote.app")
-                    put("permissions", JSONArray(listOf(
-                        "LAUNCH", "CONTROL_AUDIO", "CONTROL_INPUT_TEXT", 
-                        "CONTROL_INPUT_JOYSTICK", "READ_INSTALLED_APPS", "CONTROL_POWER",
-                        "READ_LGE_SDP_COMMON", "READ_TV_CHANNEL_LIST", "READ_NETWORK_STATE",
-                        "CONTROL_TV_SCREEN", "CONTROL_TV_SETTING", "READ_RUNNING_APPS",
-                        "READ_CURRENT_CHANNEL", "READ_TV_STATE"
-                    )))
-                })
+                put("manifest", manifest)
             })
         }
         mainSocket?.send(msg.toString())
